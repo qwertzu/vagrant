@@ -155,11 +155,13 @@ module Vagrant
         execute("controlvm", @uuid, "poweroff")
       end
 
-      def import(ovf)
+      def import(ovf , tmp_name)
         output = ""
         total = ""
         last  = 0
-        execute("import", ovf) do |type, data|
+        disk_path = File.expand_path("~/VirtualBox VMs/#{tmp_name}/box-disk1.vmdk")
+
+        execute("import", ovf , "--vsys","0","--vmname","#{tmp_name}" , "--unit" , "10" , "--disk" , "#{disk_path}") do |type, data|
           if type == :stdout
             # Keep track of the stdout so that we can get the VM name
             output << data
@@ -184,14 +186,16 @@ module Vagrant
         end
 
         # Find the name of the VM name
-        name = output[/Suggested VM name "(.+?)"/, 1]
-        if !name
+        if output.include?("--vmname: #{tmp_name}")
           @logger.error("Couldn't find VM name in the output.")
           return nil
         end
 
         output = execute("list", "vms")
-        if existing_vm = output[/^"#{Regexp.escape(name)}" \{(.+?)\}$/, 1]
+        puts "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        puts output[/^"#{ Regexp.escape(tmp_name)}" \{(.+?)\}$/, 1]
+
+        if existing_vm = output[/^"#{ Regexp.escape(tmp_name)}" \{(.+?)\}$/, 1]
           return existing_vm
         end
 

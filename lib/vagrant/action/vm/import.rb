@@ -16,7 +16,11 @@ module Vagrant
 
           # Import the virtual machine
           ovf_file = env[:vm].box.directory.join("box.ovf").to_s
-          env[:vm].uuid = env[:vm].driver.import(ovf_file) do |progress|
+
+          path = env[:root_path].to_s.match(Regexp.new("/[^/]+/#{env[:root_path].basename.to_s}")).to_s.gsub('/','_')
+          tmp_name =  path + "_#{Time.now.to_i}_#{env[:vm].name}"
+
+          env[:vm].uuid = env[:vm].driver.import(ovf_file, tmp_name) do |progress|
             env[:ui].clear_line
             env[:ui].report_progress(progress, 100, false)
           end
